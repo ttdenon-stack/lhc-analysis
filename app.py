@@ -14,7 +14,7 @@ from collections import defaultdict
 # 页面配置
 # =========================
 st.set_page_config(
-    page_title="澳门六合彩 AI 智能分析系统",
+    page_title="分析系统",
     layout="wide"
 )
 
