@@ -836,6 +836,46 @@ result = ai_engine(
     learning=True
 )
 
+# =====================================================
+# AI记录历史预测
+# =====================================================
+
+current_expect = latest_item["expect"]
+
+history_db = load_prediction_history()
+
+exists = False
+
+for x in history_db:
+
+    if x["expect"] == current_expect:
+
+        exists = True
+        break
+
+if not exists:
+
+    save_data = {
+
+        "expect": current_expect,
+
+        "time": str(datetime.now()),
+
+        "numbers": result["numbers"],
+
+        "danma": result["danma"],
+
+        "special": result["special"],
+
+        "kill": result["kill"],
+
+        "yixiao": result["yixiao"]
+    }
+
+    history_db.append(save_data)
+
+    save_prediction_history(history_db)
+
 # ============================================
 # AI记录预测历史
 # ============================================
