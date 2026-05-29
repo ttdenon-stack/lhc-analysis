@@ -2,3 +2,8 @@ streamlit
 pandas
 numpy
 requests
+streamlit
+pandas
+requests
+numpy
+PyGithub

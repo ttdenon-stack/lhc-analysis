@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import requests
@@ -874,91 +875,74 @@ if not exists:
 
     history_db.append(save_data)
 
-    save_prediction_history(history_db)
-    st.write(history_db)
+    
+    
+    import requests
+    import base64
 
-# ============================================
-# AI记录预测历史
-# ============================================
+def upload_to_github():
 
-current_expect = latest_item["expect"]
+    try:
 
-history_db = load_prediction_history()
+        token = st.secrets["GITHUB_TOKEN"]
+        repo = st.secrets["GITHUB_REPO"]
 
-exists = False
+        file_path = "prediction_history.json"
 
-for x in history_db:
+        if not os.path.exists(file_path):
+            return
 
-    if x["expect"] == current_expect:
+        with open(
+            file_path,
+            "r",
+            encoding="utf-8"
+        ) as f:
 
-        exists = True
-        break
+            content = f.read()
 
-if not exists:
+        url = (
+            f"https://api.github.com/repos/"
+            f"{repo}/contents/{file_path}"
+        )
 
-    history_db.append({
+        headers = {
+            "Authorization": f"token {token}"
+        }
 
-        "expect": current_expect,
+        r = requests.get(
+            url,
+            headers=headers
+        )
 
-        "time": str(datetime.now()),
+        sha = None
 
-        "predict_numbers": result["numbers"],
+        if r.status_code == 200:
 
-        "special": result["special"],
+            sha = r.json()["sha"]
 
-        "danma": result["danma"]
+        data = {
 
-    })
+            "message": "AI Auto Update",
 
-    save_prediction_history(history_db)
+            "content":
+            base64.b64encode(
+                content.encode("utf-8")
+            ).decode()
+        }
 
-# =====================================================
-# AI历史学习
-# =====================================================
+        if sha:
 
-current_expect = latest_item["expect"]
+            data["sha"] = sha
 
-history_db = load_prediction_history()
+        requests.put(
+            url,
+            headers=headers,
+            json=data
+        )
 
-exists = False
+    except Exception as e:
 
-for x in history_db:
-
-    if x["expect"] == current_expect:
-
-        exists = True
-        break
-
-if not exists:
-
-    real_nums = [
-        int(x)
-        for x in latest_item["openCode"].split(",")
-    ]
-
-    predict_nums = result["numbers"][:10]
-
-    hit = len(
-        set(real_nums) &
-        set(predict_nums)
-    )
-
-    history_db.append({
-
-        "expect": current_expect,
-
-        "time": str(datetime.now()),
-
-        "predict_numbers": predict_nums,
-
-        "predict_special": result["special"][:5],
-
-        "real_numbers": real_nums,
-
-        "hit": hit
-    })
-
-    save_prediction_history(history_db)
+        print("Github Upload Error:", e)
 
 # =====================================================
 # AI记录历史预测结果
@@ -992,6 +976,8 @@ if not exists:
     }
 
     save_prediction(record)
+
+    upload_to_github()
 
 for n in result["prob"]:
 
@@ -1139,15 +1125,6 @@ with tab2:
             )
 
 st.markdown("---")
-
-history_db.append({
-
-    "expect":"TEST",
-
-    "time":str(datetime.now())
-})
-
-save_prediction_history(history_db)
 
 st.caption(
     "本系统仅用于数据分析与概率研究。"
